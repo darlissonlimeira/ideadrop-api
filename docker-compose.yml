@@ -31,7 +31,7 @@ services:
     environment:
       FLYWAY_LOCATIONS: filesystem:/flyway/migration
     volumes:
-      - ./ideadrop-api/src/main/resources/db/migration:/flyway/migration
+      - ./src/main/resources/db/migration:/flyway/migration
     depends_on:
       - db
     deploy:
