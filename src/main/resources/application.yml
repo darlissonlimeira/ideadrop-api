@@ -1,0 +1,46 @@
+server:
+  port: ${PORT:8080}
+spring:
+  application:
+    name: ideadrop-api
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/ideadrop}
+    username: ${DATABASE_USER:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: 2
+      maximum-pool-size: 10
+      idle-timeout: 300000
+      max-lifetime: 1800000
+      connection-timeout: 5000
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:ideadrop}
+  cache:
+    type: redis
+
+  flyway:
+    enabled: false
+#    user: ${DATABASE_USER:postgres}
+#    password: ${DATABASE_PASSWORD:postgres}
+#    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/ideadrop}
+#    baseline-on-migrate: true
+
+app:
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:5173}
+  jwt-config:
+    secret-key: ${JWT_SECRET:3907621255bede5e3a35847039265fe54002968fa653e0d4d047460d9102d080 }
+    iss: "ideadrop-server"
+    aud: "ideadrop-client"
+
+
+
+

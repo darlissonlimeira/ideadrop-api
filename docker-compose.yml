@@ -1,0 +1,77 @@
+services:
+  api:
+    build: ./ideadrop-api
+    container_name: ideadrop-api
+    ports:
+      - "127.0.0.1:${PORT:-8080}:${PORT:-8080}"
+    environment:
+      PORT: ${PORT:-8080}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://127.0.0.1:8081,http://192.168.18.8:8081}
+      DATABASE_URL: ${DATABASE_URL:-jdbc:postgresql://db:5432/ideadrop}
+      DATABASE_USER: ${DATABASE_USER:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+      REDIS_HOST: redis
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx400m -Xss256k -XX:MaxMetaspaceSize=160m -XX:+UseSerialGC"
+      SERVER_TOMCAT_MAX_THREADS: 50
+    depends_on:
+      - db
+      - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.65'
+          memory: 700M
+        reservations:
+          memory: 350M
+
+  flyway:
+    image: flyway/flyway:11.20-alpine
+    container_name: ideadrop-flyway
+    command: -url=${DATABASE_URL:-jdbc:postgresql://db:5432/}${DATABASE_NAME:-ideadrop} -user=${DATABASE_USER:-postgres} -password=${DATABASE_PASSWORD:-postgres} -connectRetries=60 migrate -target=1
+    environment:
+      FLYWAY_LOCATIONS: filesystem:/flyway/migration
+    volumes:
+      - ./ideadrop-api/src/main/resources/db/migration:/flyway/migration
+    depends_on:
+      - db
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+  db:
+    image: postgres:16-alpine
+    container_name: ideadrop-db
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-ideadrop}
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+    ports:
+      - "127.0.0.1:5432:5432"
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_buffers=128MB"
+      - "-c"
+      - "max_connections=50"
+      - "-c"
+      - "work_mem=4MB"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  redis:
+    image: redis:alpine
+    container_name: api-cache
+    ports:
+      - "127.0.0.1:6379:6379"
+    command: redis-server --requirepass ideadrop --maxmemory 64mb --maxmemory-policy allkeys-lru
+    deploy:
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: 128M
